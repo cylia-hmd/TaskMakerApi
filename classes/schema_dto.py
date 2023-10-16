@@ -1,16 +1,28 @@
 import datetime
 from pydantic import BaseModel
+from typing import Optional
 
-
-# Modèle de données Pydantic pour un utilisateur
 class User(BaseModel):
+    id: str
     username: str
-    password: str
+    password: str  
+
 
 # Modèle de données Pydantic pour une tâche
 class Task(BaseModel):
+    id: str
     title: str
-    description: str
-    due_date: str
-    completed: bool = False
     owner: str
+    completed: bool = False
+
+
+class UserNoID(BaseModel):
+    username: str
+    password: str
+
+
+class TaskNoID(BaseModel):
+    title: str
+    description: Optional[str]   
+    owner: str
+    completed: bool = False
