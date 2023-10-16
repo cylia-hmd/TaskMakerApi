@@ -1,21 +1,19 @@
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
-from typing import List, Optional
-from . import users, tasks  # Importez les fichiers de routeurs
+# Import du framework
+from fastapi import FastAPI
 
-app = FastAPI()
+# Documentation
+from documentation.description import api_description
+from documentation.tags import tags_metadata
 
+#Routers
+import routers.router_tasks, routers.router_users
+# Initialisation de l'API
+app = FastAPI(
+    title="Tasks Maker",
+    description=api_description,
+    openapi_tags= tags_metadata
+)
 
-
-# Stockage en mémoire pour les utilisateurs et les tâches
-users_db = []
-tasks_db = []
-
-
-
-
-# Inclure le routeur pour les utilisateurs
-app.include_router(users.user_router, prefix="/users", tags=["users"])
-
-# Inclure le routeur pour les tâches
-app.include_router(tasks.task_router, prefix="/tasks", tags=["tasks"])
+# Routers
+app.include_router(routers.router_users.router)
+app.include_router(routers.router_tasks.router)

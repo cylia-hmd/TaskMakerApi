@@ -1,25 +1,48 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from . import models  # Assurez-vous que le module "models" contient vos classes SQLAlchemy
-from . import database  # Module contenant la configuration de la base de données
+from fastapi import APIRouter, HTTPException
+from typing import List
+import uuid
+from classes.schema_dto import User, UserNoID
 
-user_router = APIRouter()
+router_user = APIRouter(
+    prefix='/users',
+    tags=["Users"]
+)
 
-# Endpoint pour créer un utilisateur
-@app.post("/users/", response_model=User)
-def create_user(user: User):
-    users_db.append(user)
-    return user
+users = [
+    User(id=str(uuid.uuid4()), username="user1"),
+    User(id=str(uuid.uuid4()), username="user2"),
+    User(id=str(uuid.uuid4()), username="user3")
+]
 
-# Endpoint pour récupérer un utilisateur par son nom d'utilisateur
-@app.get("/users/{username}", response_model=User)
-def get_user(username: str):
-    user = next((user for user in users_db if user.username == username), None)
-    if user is None:
-        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
-    return user
+@router_user.get('/', response_model=List[User])
+async def get_users():
+    return users
 
-# Endpoint pour récupérer la liste de tous les utilisateurs
-@app.get("/users/", response_model=List[User])
-def get_all_users():
-    return users_db
+@router_user.post('/', response_model=User, status_code=201)
+async def create_user(user: UserNoID):
+    new_user = User(id=str(uuid.uuid4()), username=user.username)
+    users.append(new_user)
+    return new_user
+
+@router_user.get('/{user_id}', response_model=User)
+async def get_user_by_id(user_id: str):
+    for user in users:
+        if user.id == user_id:
+            return user
+    raise HTTPException(status_code=404, detail="User not found")
+
+@router_user.patch('/{user_id}', status_code=204)
+async def modify_user_name(user_id: str, modified_user: UserNoID):
+    for user in users:
+        if user.id == user_id:
+            user.username = modified_user.username
+            return
+    raise HTTPException(status_code=404, detail="User not found")
+
+@router_user.delete('/{user_id}', status_code=204)
+async def delete_user(user_id: str):
+    for user in users:
+        if user.id == user_id:
+            users.remove(user)
+            return
+    raise HTTPException(status_code=404, detail="User not found")

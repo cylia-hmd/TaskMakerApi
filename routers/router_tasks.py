@@ -1,40 +1,47 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from . import models  # Assurez-vous que le module "models" contient vos classes SQLAlchemy
-from . import database  # Module contenant la configuration de la base de données
+from fastapi import APIRouter, HTTPException
+from typing import List
+from classes.schema_dto import Task, TaskNoID
 
-task_router = APIRouter()
+router = APIRouter(
+    prefix='/tasks',
+    tags=["Tasks"]
+)
 
-# Endpoint pour créer une tâche
-@app.post("/tasks/", response_model=Task)
-def create_task(task: Task):
-    tasks_db.append(task)
-    return task
+tasks = [
+    Task(id=str(uuid.uuid4()), title="Task 1", owner="user1"),
+    Task(id=str(uuid.uuid4()), title="Task 2", owner="user2"),
+    Task(id=str(uuid.uuid4()), title="Task 3", owner="user1")
+]
 
-# Endpoint pour récupérer toutes les tâches de l'utilisateur actuel
-@app.get("/tasks/", response_model=List[Task])
-def get_tasks(current_user: User = Depends()):
-    user_tasks = [task for task in tasks_db if task.owner == current_user.username]
-    return user_tasks
+@router.get('/', response_model=List[Task])
+async def get_tasks():
+    return tasks
 
-# Endpoint pour mettre à jour une tâche par son ID
-@app.put("/tasks/{task_id}", response_model=Task)
-def update_task(task_id: int, task: Task, current_user: User = Depends()):
-    if task_id < 0 or task_id >= len(tasks_db):
-        raise HTTPException(status_code=404, detail="Tâche non trouvée")
-    existing_task = tasks_db[task_id]
-    if existing_task.owner != current_user.username:
-        raise HTTPException(status_code=403, detail="Permission refusée")
-    tasks_db[task_id] = task
-    return task
+@router.post('/', response_model=Task, status_code=201)
+async def create_task(task: TaskNoID):
+    new_task = Task(id=str(uuid.uuid4()), title=task.title, owner=task.owner)
+    tasks.append(new_task)
+    return new_task
 
-# Endpoint pour supprimer une tâche par son ID
-@app.delete("/tasks/{task_id}", response_model=Task)
-def delete_task(task_id: int, current_user: User = Depends()):
-    if task_id < 0 or task_id >= len(tasks_db):
-        raise HTTPException(status_code=404, detail="Tâche non trouvée")
-    existing_task = tasks_db[task_id]
-    if existing_task.owner != current_user.username:
-        raise HTTPException(status_code=403, detail="Permission refusée")
-    deleted_task = tasks_db.pop(task_id)
-    return deleted_task
+@router.get('/{task_id}', response_model=Task)
+async def get_task_by_id(task_id: str):
+    for task in tasks:
+        if task.id == task_id:
+            return task
+    raise HTTPException(status_code=404, detail="Task not found")
+
+@router.patch('/{task_id}', status_code=204)
+async def modify_task_title(task_id: str, modified_task: TaskNoID):
+    for task in tasks:
+        if task.id == task_id:
+            task.title = modified_task.title
+            return
+    raise HTTPException(status_code=404, detail="Task not found")
+
+@router.delete('/{task_id}', status_code=204)
+async def delete_task(task_id: str):
+    for task in tasks:
+        if task.id == task_id:
+            tasks.remove(task)
+            return
+    raise HTTPException(status_code=404, detail="Task not found")
