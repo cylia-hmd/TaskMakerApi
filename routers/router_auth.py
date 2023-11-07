@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from classes.schema_dto import User
 from firebase_admin import auth
-from database.firebase import authSession
+from database.firebase import authUser
 
 
 router = APIRouter(

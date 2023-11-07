@@ -1,4 +1,4 @@
-const firebaseConfig = {
+firebaseConfig = {
   "apiKey": "AIzaSyD8hg-azImSaBOWyM4uFKyHJ_AzCeA6exs",
   "authDomain": "taskmakerapi.firebaseapp.com",
   "projectId": "taskmakerapi",
