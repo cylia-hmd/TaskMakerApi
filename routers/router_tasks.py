@@ -21,46 +21,45 @@ tasks = [
 ]
 
 
-@router.get('/', response_model=List[Task])
-async def get_sessions(userData: int = Depends(get_current_user)):
-    fireBaseobject = db.child("users").child(userData['uid']).child('task').get(userData['idToken']).val()
-    resultArray = [value for value in fireBaseobject.values()]
+@router.get('/tasks', response_model=List[Task])
+async def get_task(userData: int = Depends(get_current_user)):
+    fireBaseObject = db.child("tasks").child(userData['uid']).child('tasks').get(userData['idToken']).val()
+    if not fireBaseObject : return []
+    resultArray = [value for value in fireBaseObject.values()]
     return resultArray
 
-@router.post('/', response_model=Task, status_code=201)
-async def create_sessions(givenName:TaskNoID, userData: int = Depends(get_current_user)):
+@router.post('/tasks')
+async def create_task(givenTask:TaskNoID, userData: int = Depends(get_current_user)):
     generatedId=uuid.uuid4()
-    newTask= Task(id=str(generatedId), title=givenTitle, owner=givenOwner, completed = bool )
-    db.child("users").child(userData['uid']).child("task").child(str(generatedId)).set(newTask.model_dump())
+    newTask = Task(id=str(generatedId), title=givenTask.title, description= givenTask.description, owner= givenTask.owner, completed= givenTask.completed)
+    # increment_stripe(userData['uid'])
+    db.child("tasks").child(userData['uid']).child("tasks").child(str(generatedId)).set(newTask.dict(), token=userData['idToken'])
     return newTask
 
 @router.get('/{task_id}', response_model=Task)
-async def get_task_by_id(task_id: int):
-    for task in tasks:
-        if task.id == task_id:
-            return task
+async def get_task_by_ID(task_id: uuid.UUID, userData: int = Depends(get_current_user)):
+    fireBaseobject = db.child('tasks').child(userData['uid']).child('tasks').child(str(task_id)).get(userData['idToken']).val()
+    if fireBaseobject is not None:
+        return fireBaseobject
     raise HTTPException(status_code=404, detail="Task not found")
 
 
 @router.patch('/{task_id}', status_code=204)
-async def modify_student_name(task_id:int, modified_task: Task, userData: int = Depends(get_current_user)):
-    fireBaseobject = db.child("users").child(userData['uid']).child('tasks').child(task_id).get(userData['idToken']).val()
+async def modify_task_name(task_id:str, modifiedtask: TaskNoID, userData: int = Depends(get_current_user)):
+    fireBaseobject = db.child("tasks").child(userData['uid']).child('tasks').child(task_id).get(userData['idToken']).val()
     if fireBaseobject is not None:
-        updatedTask = Task(id=task_id, **modifiedTask.model_dump())
-        return db.child("users").child(userData['uid']).child('tasks').child(task_id).update(updatedTask.model_dump(), userData['idToken'] )
-    raise HTTPException(status_code= 404, detail="Session not found")
-
-
-
+        updatedtask = Task(id=task_id, **modifiedtask.dict())
+        return db.child("tasks").child(userData['uid']).child('tasks').child(task_id).update(updatedtask.dict(), userData['idToken'] )
+    raise HTTPException(status_code= 404, detail="Task not found")
 
 @router.delete('/{task_id}', status_code=204)
-async def delete_task(task_id: int, userData: int = Depends(get_current_user)):
+async def delete_task(task_id:str, userData: int = Depends(get_current_user)):
     try:
-        fireBaseobject = db.child("users").child(userData['uid']).child('tasks').child(task_id).get(userData['idToken']).val()
+        fireBaseobject = db.child("tasks").child(userData['uid']).child('tasks').child(task_id).get(userData['idToken']).val()
     except:
         raise HTTPException(
-            status_code=403, detail="Accès interdit"
+            status_code=403, detail="Unauthaurized"
         )
     if fireBaseobject is not None:
-        return db.child("users").child(userData['uid']).child('tasks').child(task_id).remove(userData['idToken'])
-    raise HTTPException(status_code= 404, detail="Session not found")
+        return db.child("tasks").child(userData['uid']).child('tasks').child(task_id).remove(userData['idToken'])
+    raise HTTPException(status_code= 404, detail="Task not found")
