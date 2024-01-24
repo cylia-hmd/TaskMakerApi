@@ -11,7 +11,7 @@ router = APIRouter(
     tags=["Tasks"]
 )
 
-# Utilisez une variable globale pour suivre les identifiants des tâches
+
 task_id_counter = 1
 
 tasks = [
@@ -28,7 +28,7 @@ async def get_task(userData: int = Depends(get_current_user)):
     resultArray = [value for value in fireBaseObject.values()]
     return resultArray
 
-@router.post('/tasks')
+@router.post('/tasks', status_code=201)
 async def create_task(givenTask:TaskNoID, userData: int = Depends(get_current_user)):
     generatedId=uuid.uuid4()
     newTask = Task(id=str(generatedId), title=givenTask.title, description= givenTask.description, owner= givenTask.owner, completed= givenTask.completed)
