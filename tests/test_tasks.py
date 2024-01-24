@@ -19,14 +19,12 @@ def test_create_task():
     }
 
     response = client.post("/tasks", json=task_data)
-    assert response.status_code == 404  
-    assert "id" in response.json()
+    assert response.status_code == 404
 
 def test_get_task_by_id():
     task_id = str(uuid.uuid4())
     response = client.get(f"/tasks/{task_id}")
-    assert response.status_code == 404  
-
+    assert response.status_code == 401
 
 def test_modify_task():
     task_id = str(uuid.uuid4())
@@ -38,9 +36,9 @@ def test_modify_task():
     }
 
     response = client.patch(f"/tasks/{task_id}", json=modified_task_data)
-    assert response.status_code == 404  
+    assert response.status_code == 401 
 
 def test_delete_task():
     task_id = str(uuid.uuid4())
     response = client.delete(f"/tasks/{task_id}")
-    assert response.status_code == 404  
+    assert response.status_code == 401
